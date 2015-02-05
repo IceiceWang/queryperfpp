@@ -80,10 +80,10 @@ usage() {
     std::cerr << "  -C sets default query class (default: "
          << DEFAULT_CLASS << ")\n";
     std::cerr << "  -d sets the input data file (default: stdin)\n";
-    std::cerr << "  -D sets whether to set EDNS DO bit (default: "
-         << (DEFAULT_EDNS ? "on" : "off") << ")\n";
-    std::cerr << "  -e sets whether to include EDNS (default: "
+    std::cerr << "  -D sets whether to set DNSSEC DO bit (default: "
          << (DEFAULT_DNSSEC ? "on" : "off") << ")\n";
+    std::cerr << "  -e sets whether to enable EDNS (default: "
+         << (DEFAULT_EDNS ? "on" : "off") << ")\n";
     std::cerr << "  -l sets how long to run tests in seconds (default: "
          << getDefaultDuration() << ")\n";
     std::cerr << "  -L enables query preloading (default: disabled)\n";
