@@ -57,6 +57,8 @@ public:
     /// \brief Default timeout for query completion in seconds.
     static const unsigned int DEFAULT_QUERY_TIMEOUT = 5;
 
+    static const uint16_t MAX_RCODE = 0xfff;
+
     /// \brief Generic constructor.
     ///
     /// \param msg_mgr A message manager object that handles I/O and timeout
@@ -120,6 +122,9 @@ public:
 
     /// \brief Return the number of queries correctly responded.
     size_t getQueriesCompleted() const;
+
+    /// \brief Return the number of each RCode.
+    const size_t* getRcodes() const;
 
     /// \brief Return the absolute time when the first query was sent.
     const boost::posix_time::ptime& getStartTime() const;

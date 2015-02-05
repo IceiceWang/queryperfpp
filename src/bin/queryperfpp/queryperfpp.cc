@@ -14,6 +14,8 @@
 
 #include <dispatcher.h>
 
+#include <dns/rcode.h>
+
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
@@ -33,6 +35,7 @@
 #include <stdint.h>
 
 using namespace Queryperf;
+using namespace isc::dns;
 using namespace boost::posix_time;
 using boost::lexical_cast;
 using boost::shared_ptr;
@@ -40,10 +43,13 @@ using boost::shared_ptr;
 namespace {
 struct QueryStatistics {
     QueryStatistics() : queries_sent(0), queries_completed(0)
-    {}
+    {
+        memset(rcodes, 0, sizeof(rcodes));
+    }
 
     size_t queries_sent;
     size_t queries_completed;
+    size_t rcodes[Dispatcher::MAX_RCODE + 1];
     std::vector<double> qps_results; // a list of QPS per worker thread
 };
 
@@ -51,6 +57,10 @@ double
 accumulateResult(const Dispatcher& disp, QueryStatistics& result) {
     result.queries_sent += disp.getQueriesSent();
     result.queries_completed += disp.getQueriesCompleted();
+    for (uint16_t i = 0; i <= Dispatcher::MAX_RCODE; ++i)
+    {
+        result.rcodes[i] += disp.getRcodes()[i];
+    }
 
     const time_duration duration = disp.getEndTime() - disp.getStartTime();
     return (disp.getQueriesCompleted() / (
@@ -72,11 +82,12 @@ usage() {
     const std::string usage_head = "Usage: queryperf++ ";
     const std::string indent(usage_head.size(), ' ');
     std::cerr << usage_head
-         << "[-C qclass] [-d datafile] [-D on|off] [-e on|off] [-l limit]\n";
+         << " [-c count_rcodes] [-C qclass] [-d datafile] [-D on|off] [-e on|off] [-l limit]\n";
     std::cerr << indent
          << "[-L] [-n #threads] [-p port] [-P udp|tcp] [-Q query_sequence]\n";
     std::cerr << indent
          << "[-s server_addr]\n";
+    std::cerr << "  -c count rcode of each response\n";
     std::cerr << "  -C sets default query class (default: "
          << DEFAULT_CLASS << ")\n";
     std::cerr << "  -d sets the input data file (default: stdin)\n";
@@ -137,6 +148,7 @@ parseOnOffFlag(const char* optname, const char* const optarg,
 
 int
 main(int argc, char* argv[]) {
+    bool count_rcode = false;
     const char* qclass_txt = DEFAULT_CLASS;
     const char* data_file = NULL;
     const char* dnssec_flag_txt = NULL;
@@ -152,8 +164,11 @@ main(int argc, char* argv[]) {
     bool preload = false;
 
     int ch;
-    while ((ch = getopt(argc, argv, "C:d:D:e:hl:Ln:p:P:Q:s:")) != -1) {
+    while ((ch = getopt(argc, argv, "cC:d:D:e:hl:Ln:p:P:Q:s:")) != -1) {
         switch (ch) {
+        case 'c':
+            count_rcode = true;
+            break;
         case 'C':
             qclass_txt = optarg;
             break;
@@ -310,6 +325,19 @@ main(int argc, char* argv[]) {
              << " queries\n";
         std::cout << "\n";
 
+        if (count_rcode)
+        {
+            for (uint16_t i = 0; i <= Dispatcher::MAX_RCODE; ++i)
+            {
+                if (0 != result.rcodes[i])
+                {
+                    std::cout << "  Returned " << std::setw(10) << Rcode(i).toText()
+                              << " : " << result.rcodes[i] << std::endl;
+                }
+            }
+            std::cout << "\n";
+        }
+        
         std::cout << "  Percentage completed: " << std::setprecision(2);
         if (result.queries_sent > 0) {
             std::cout << std::setw(6)

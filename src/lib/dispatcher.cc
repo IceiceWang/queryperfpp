@@ -23,6 +23,7 @@
 #include <exceptions/exceptions.h>
 #include <dns/message.h>
 #include <dns/rrclass.h>
+#include <dns/rcode.h>
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
@@ -155,6 +156,7 @@ struct Dispatcher::DispatcherImpl {
         qid_ = 0;
         queries_sent_ = 0;
         queries_completed_ = 0;
+        memset(rcodes_, 0, sizeof(rcodes_));
         server_address_ = DEFAULT_SERVER;
         server_port_ = DEFAULT_PORT;
         test_duration_ = DEFAULT_DURATION;
@@ -229,6 +231,7 @@ struct Dispatcher::DispatcherImpl {
     // statistics
     size_t queries_sent_;
     size_t queries_completed_;
+    size_t rcodes_[MAX_RCODE + 1];
     ptime start_time_;
     ptime end_time_;
 };
@@ -309,6 +312,8 @@ Dispatcher::DispatcherImpl::restartQuery(qid_t qid, const Message* response) {
         if (response != NULL) {
             // TODO: let the context check the response further
             ++queries_completed_;
+            uint16_t rcode = response->getRcode().getCode();
+            ++rcodes_[rcode];
         }
 
         // If necessary, create a new query and dispatch it.
@@ -488,6 +493,11 @@ Dispatcher::getQueriesSent() const {
 size_t
 Dispatcher::getQueriesCompleted() const {
     return (impl_->queries_completed_);
+}
+
+const size_t*
+Dispatcher::getRcodes() const {
+    return (impl_->rcodes_);
 }
 
 const ptime&
