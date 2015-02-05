@@ -2,5 +2,9 @@ Makefile
 config.*
 libtool
 .deps
+.libs
 stamp-*
 *.o
+*.lo
+*.la
+queryperf++
