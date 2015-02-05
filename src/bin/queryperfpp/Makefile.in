@@ -313,7 +313,7 @@ clean-binPROGRAMS:
 	rm -f $$list
 queryperf++$(EXEEXT): $(queryperf___OBJECTS) $(queryperf___DEPENDENCIES) 
 	@rm -f queryperf++$(EXEEXT)
-	$(CXXLINK) $(queryperf___OBJECTS) $(queryperf___LDADD) $(LIBS)
+	$(CXXLINK) $(queryperf___OBJECTS) $(queryperf___LDADD) $(LIBS) -static-libtool-libs
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)

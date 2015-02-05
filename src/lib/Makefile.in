@@ -353,7 +353,7 @@ clean-libLTLIBRARIES:
 	  rm -f "$${dir}/so_locations"; \
 	done
 libqueryperf++.la: $(libqueryperf___la_OBJECTS) $(libqueryperf___la_DEPENDENCIES) 
-	$(libqueryperf___la_LINK) -rpath $(libdir) $(libqueryperf___la_OBJECTS) $(libqueryperf___la_LIBADD) $(LIBS)
+	$(libqueryperf___la_LINK) -rpath $(libdir) $(libqueryperf___la_OBJECTS) $(libqueryperf___la_LIBADD) $(LIBS) -static-libtool-libs
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
