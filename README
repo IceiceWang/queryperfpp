@@ -72,7 +72,8 @@ just work for building queryperf++:
 % ./configure --with-boost-include=${BOOST_HEADER_DIR} \
     --with-bind10-include=${BIND10_SRC_DIR}/src/lib \
     --with-bind10-lib=${BIND10_INSTALL_DIR} \
-    --with-asio-include=${BIND10_SRC_DIR}/ext/asio
+    --with-asio-include=${BIND10_SRC_DIR}/ext/asio \
+    LIBS=-lpthread
 % make
 
 I have successfully built queryperf++ with several versions of g++ on
