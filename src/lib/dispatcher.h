@@ -22,6 +22,7 @@
 
 #include <stdexcept>
 #include <istream>
+#include <vector>
 
 #include <sys/types.h>
 #include <stdint.h>
@@ -36,6 +37,27 @@ public:
     {}
 };
 
+enum CATEGORY
+{
+    CATEGORY_SUCCESS = 0,
+    CATEGORY_FAILURE = 1,
+    CATEGORY_MAX = 2
+};
+
+struct histogram_bucket {
+    uint32_t categories[CATEGORY_MAX];
+};
+    
+const char category_markers[CATEGORY_MAX] = { '#', '-' };
+
+enum LATENCY
+{
+    LT_FASTEST = 0,
+    LT_SLOWEST = 1,
+    LT_SUM     = 2,
+    LT_MAX     = 3
+};
+    
 class Dispatcher : private boost::noncopyable {
 public:
     //
@@ -117,6 +139,8 @@ public:
     /// This method must be called before run().
     void setEDNS(bool on);
 
+    void setHistogramInput(size_t historgam_nbuckets, size_t histogram_time);
+
     /// \brief Return the number of queries sent from the dispatcher.
     size_t getQueriesSent() const;
 
@@ -125,6 +149,12 @@ public:
 
     /// \brief Return the number of each RCode.
     const size_t* getRcodes() const;
+
+    double getFastestLatency() const;
+    double getSlowestLatency() const;
+    double getSumLatency() const;
+    
+    const std::vector<struct histogram_bucket*>& getBuckets() const;
 
     /// \brief Return the absolute time when the first query was sent.
     const boost::posix_time::ptime& getStartTime() const;
@@ -136,6 +166,8 @@ private:
     struct DispatcherImpl;
     DispatcherImpl* impl_;
 };
+
+
 
 } // end of QueryPerf
 
