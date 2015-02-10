@@ -143,6 +143,7 @@ usage() {
     std::cerr << "  -P sets transport protocol for queries (default: "
          << DEFAULT_PROTOCOL << ")\n";
     std::cerr << "  -q sets newline-separated query data (default: unspecified)\n";
+    std::cerr << "  -Q sets the number of queries per second (default: unlimited)\n";
     std::cerr << "  -s sets the server to query (default: "
               << Dispatcher::DEFAULT_SERVER << ")\n";
     std::cerr << "  -c count rcode of each response (default: disabled)\n";
@@ -287,13 +288,15 @@ main(int argc, char* argv[]) {
     const char* histogram_nbuckets_txt = NULL;
     const char* histogram_time_txt = NULL;
     const char* query_txt = NULL;
+    const char* qps_txt = NULL;
     size_t num_threads = DEFAULT_THREAD_COUNT;
     size_t histogram_nbuckets = DEFAULT_BUCKETS;
     size_t histogram_time = DEFAULT_HISTOGRAM_TIME;
+    size_t qps = 0;
     bool preload = false;
 
     int ch;
-    while ((ch = getopt(argc, argv, "C:d:D:Ae:hl:Ln:p:P:Q:s:cH:T:")) != -1) {
+    while ((ch = getopt(argc, argv, "C:d:D:Ae:hl:Ln:p:P:q:Q:s:cH:T:")) != -1) {
         switch (ch) {
         case 'C':
             qclass_txt = optarg;
@@ -322,8 +325,11 @@ main(int argc, char* argv[]) {
         case 'P':
             proto_txt = optarg;
             break;
-        case 'Q':
+        case 'q':
             query_txt = optarg;
+            break;
+        case 'Q':
+            qps_txt = optarg;
             break;
         case 'l':
             time_limit_str = std::string(optarg);
@@ -396,6 +402,11 @@ main(int argc, char* argv[]) {
                 exit(1);
             }
         }
+        
+        if (NULL != qps_txt)
+        {
+            qps = lexical_cast<size_t>(qps_txt);
+        }
 
         // Prepare
         std::cout << "[Status] Processing input data" << std::endl;
@@ -417,6 +428,7 @@ main(int argc, char* argv[]) {
             disp->setEDNS(edns_flag);
             disp->setProtocol(proto);
             disp->setHistogramInput(histogram_nbuckets, histogram_time);
+            disp->setQPS(qps/num_threads);
             // Preload must be the final step of configuration before running.
             if (preload) {
                 disp->loadQueries();

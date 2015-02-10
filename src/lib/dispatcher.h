@@ -140,6 +140,7 @@ public:
     void setEDNS(bool on);
 
     void setHistogramInput(size_t historgam_nbuckets, size_t histogram_time);
+    void setQPS(size_t qps);
 
     /// \brief Return the number of queries sent from the dispatcher.
     size_t getQueriesSent() const;

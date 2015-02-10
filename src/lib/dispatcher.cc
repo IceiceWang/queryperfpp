@@ -226,6 +226,10 @@ struct Dispatcher::DispatcherImpl {
 
     // A subroutine commonly used to send a single query.
     void sendQuery(QueryEvent& qev, const QueryContext::QuerySpec& qry_spec) {
+        if(0 != qps_)
+        {
+            ussleep(1000000/qps_);
+        }
         qev.setStartTime();
         if (qry_spec.proto == IPPROTO_UDP) {
             udp_socket_->send(qry_spec.data, qry_spec.len);
@@ -248,6 +252,26 @@ struct Dispatcher::DispatcherImpl {
     // Stop sending more queries; only wait for outstanding ones.
     void sessionTimerCallback() {
         keep_sending_ = false;
+    }
+    
+    int __nsleep(const struct timespec *req, struct timespec *rem)
+    {
+        struct timespec temp_rem;
+        if(nanosleep(req,rem) == -1)
+            return __nsleep(rem,&temp_rem);
+        else
+            return 0;
+    }
+ 
+    int ussleep(unsigned long usec)
+    {
+        struct timespec req = {0, 0},rem = {0, 0};
+        time_t sec = (int)(usec/1000000);
+        usec = usec % 1000000;
+        req.tv_sec = sec;
+        req.tv_nsec = usec * 1000L;
+        __nsleep(&req, &rem);
+        return 0;
     }
 
     // These are placeholders for the support class objects when they are
@@ -284,6 +308,7 @@ struct Dispatcher::DispatcherImpl {
     size_t rcodes_[MAX_RCODE];
     ptime start_time_;
     ptime end_time_;
+    size_t qps_;
     size_t histogram_nbuckets_;
     size_t histogram_time_;
     double histogram_bps_;
@@ -315,7 +340,7 @@ Dispatcher::DispatcherImpl::run() {
                                           this, _1, _2)));
         outstanding_.push_back(qev);
     }
-
+    
     // Record the start time and dispatch initial queries at once.
     start_time_ = microsec_clock::local_time();
     BOOST_FOREACH(boost::shared_ptr<QueryEvent>& qev, outstanding_) {
@@ -591,6 +616,12 @@ Dispatcher::setHistogramInput(size_t histogram_nbuckets, size_t histogram_time) 
 
     impl_->histogram_time_ = histogram_time;
     impl_->histogram_bps_  = (double) histogram_nbuckets / histogram_time;
+}
+
+void
+Dispatcher::setQPS(size_t qps)
+{
+    impl_->qps_ = qps;
 }
 
 size_t
